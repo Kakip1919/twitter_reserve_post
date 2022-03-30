@@ -105,17 +105,29 @@
                     <table class="table table-hover">
                         <thead>
                         <tr>
-                            <th scope="col">#</th>
                             <th scope="col">アカウント名</th>
-                            <th scope="col">Consumer-Key</th>
+                            <th scope="col">名前</th>
+                            <th scope="col">詳細</th>
+                            <th scope="col">居場所</th>
+                            <th scope="col">url</th>
+                            <th scope="col">予約日時</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for item in data %}
                             <tr>
-                                <th scope="row">{{ item.id }}</th>
                                 <td>{{ item.account_name }}</td>
-                                <td>{{ item.consumer_key }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.description }}</td>
+                                <td>{{ item.location }}</td>
+                                <td>{{ item.url }}</td>
+                                <td>{{ item.reserved }}</td>
+                                <td>
+                                    <form action="/profile/delete" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="id" value="{{ item.id }}">
+                                        <button type="submit" class="btn btn-danger">削除する</button>
+                                    </form>
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -124,8 +136,8 @@
             </div>
         </div>
         <div class="text-right mr-5">
-            <a href="/account/create">
-                <button class="btn btn-primary">アカウントを追加</button>
+            <a href="/profile/create">
+                <button class="btn btn-primary">プロフィールを追加</button>
             </a>
         </div>
     </div>

@@ -12,9 +12,9 @@
           name='viewport'/>
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet"/>
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
-    <link href="../../static/assets/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="../../static/assets/css/bootstrap.min.css?q=1422350253" rel="stylesheet"/>
     <link href="../../static/assets/css/paper-dashboard.css?v=2.0.1" rel="stylesheet"/>
-    <link href="../../static/assets/demo/demo.css" rel="stylesheet"/>
+    <link href="../../static/assets/demo/demo.css?q=1422350253" rel="stylesheet"/>
 </head>
 <body class="">
 <div class="wrapper ">
@@ -69,16 +69,6 @@
                     <span class="navbar-toggler-bar navbar-kebab"></span>
                 </button>
                 <div class="collapse navbar-collapse justify-content-end" id="navigation">
-                    <form>
-                        <div class="input-group no-border">
-                            <input type="text" value="" class="form-control" placeholder="Search...">
-                            <div class="input-group-append">
-                                <div class="input-group-text">
-                                    <i class="nc-icon nc-zoom-split"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
                     <ul class="navbar-nav">
                         <li class="nav-item btn-rotate dropdown">
                             <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink"
@@ -99,34 +89,63 @@
             </div>
         </nav>
         <!-- End Navbar -->
+
         <div class="content">
             <div class="row">
-                <div class="col-md-12">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">アカウント名</th>
-                            <th scope="col">Consumer-Key</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for item in data %}
-                            <tr>
-                                <th scope="row">{{ item.id }}</th>
-                                <td>{{ item.account_name }}</td>
-                                <td>{{ item.consumer_key }}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                <form method="post" action="/profile/store">
+                    <div class="col-md-12">
+                        <div class="row">
+                            <label>
+                                <b>アカウント名</b>
+                                <select name="account_name" class="form-control" required>
+                                    {% for item in data %}
+                                        <option>{{ item.account_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label>
+                                <b>名前</b>
+                            </label>
+                            <input type="text" class="form-control" name="name">
+                        </div>
+                        <div class="row">
+                            <label>
+                                <b>プロフィール詳細</b>
+                            </label>
+                            <textarea name="detail" class="form-control"></textarea>
+                        </div>
+                        <div class="row">
+                            <label>
+                                <b>居場所</b>
+                            </label>
+                            <input type="text" class="form-control" name="location">
+                        </div>
+                     <div class="row">
+                            <label>
+                                <b>URL</b>
+                            </label>
+                            <input type="text" class="form-control" name="url">
+                        </div>
+                        <div class="row mt-3">
+                            <label>
+                                <b>日付</b>
+                            </label>
+                            <input type="date" name="date" class="form-control" required>
+                        </div>
+                        <div class="row mt-3">
+                            <label>
+                                <b>日時</b>
+                            </label>
+                            <input type="time" name="time" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary">プロフィールを予約する</button>
+                    </div>
+                </form>
             </div>
-        </div>
-        <div class="text-right mr-5">
-            <a href="/account/create">
-                <button class="btn btn-primary">アカウントを追加</button>
-            </a>
         </div>
     </div>
 </div>

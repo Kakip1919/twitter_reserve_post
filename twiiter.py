@@ -14,8 +14,7 @@ class Twitter_Module:
         self.api.update_status("テストです")
 
     # プロフィール設定
-    def post_profile(self):
-        self.api.update_profile(name="API Developer", location="America", description="run test api now")
+
 
     # 予約
     @staticmethod
@@ -25,5 +24,12 @@ class Twitter_Module:
         time.sleep(schedule_do)
 
 
-TwitterClass = Twitter_Module()
-TwitterClass.post_tweet()
+auth = tweepy.OAuthHandler(CONFIG["consumer_key"], CONFIG["consumer_secret"])
+auth.set_access_token(CONFIG["access_token_key"], CONFIG["access_token_secret"])
+api = tweepy.API(auth)
+
+name = "class"
+location = "None"
+description = "hello im api developer"
+
+api.update_profile(name="clarrrrsdadasdsdasdasdads", url=None, location="None", description="hello im api dgdfgdgdeveloper")

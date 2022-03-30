@@ -105,7 +105,6 @@
                     <table class="table table-hover">
                         <thead>
                         <tr>
-                            <th scope="col">#</th>
                             <th scope="col">アカウント名</th>
                             <th scope="col">ツイート内容</th>
                             <th scope="col">予約日時</th>
@@ -114,10 +113,15 @@
                         <tbody>
                         {% for item in data %}
                             <tr>
-                                <th scope="row">{{ item.id }}</th>
                                 <td>{{ item.account_name }}</td>
                                 <td>{{ item.contents }}</td>
                                 <td>{{ item.reserved }}</td>
+                                <td>
+                                    <form action="/tweet/delete" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="id" value="{{ item.id }}">
+                                        <button type="submit" class="btn btn-danger">削除する</button>
+                                    </form>
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>

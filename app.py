@@ -1,8 +1,9 @@
-from datetime import datetime
+import datetime
 import time
+import concurrent.futures
 import tweepy
 from config import CONFIG
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -25,40 +26,73 @@ class Tweet(db.Model):
     account_name = db.Column(db.String(32), nullable=False)
     contents = db.Column(db.String(1028), nullable=False)
     reserved = db.Column(db.DateTime(), nullable=False)
-    y = db.Column(db.Integer(), nullable=False)
-    m = db.Column(db.Integer(), nullable=False)
-    d = db.Column(db.Integer(), nullable=False)
-    h = db.Column(db.Integer(), nullable=False)
-    mt = db.Column(db.Integer(), nullable=False)
 
 
 class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     account_name = db.Column(db.String(32), nullable=False)
-    url = db.Column(db.String(128), nullable=False)
-    location = db.Column(db.String(128), nullable=False)
-    description = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(32), nullable=True)
+    url = db.Column(db.String(128), nullable=True)
+    location = db.Column(db.String(64), nullable=True)
+    description = db.Column(db.String(200), nullable=True)
+    reserved = db.Column(db.DateTime(), nullable=False)
 
 
-class Twitter_Module:
-    auth = tweepy.OAuthHandler(CONFIG["consumer_key"], CONFIG["consumer_secret"])
-    auth.set_access_token(CONFIG["access_token_key"], CONFIG["access_token_secret"])
-    api = tweepy.API(auth)
+auth = tweepy.OAuthHandler(CONFIG["consumer_key"], CONFIG["consumer_secret"])
+auth.set_access_token(CONFIG["access_token_key"], CONFIG["access_token_secret"])
+api = tweepy.API(auth)
 
-    # ツイートの送信
-    def post_tweet(self, contents):
-        self.api.update_status(contents)
 
-    # プロフィール設定
-    def post_profile(self,name,location,description):
-        self.api.update_profile(name=name, location=location, description=description)
+# ツイートの送信
+def post_tweet(self, contents):
+    self.update_status(contents)
 
-    # 予約
-    @staticmethod
-    def cal_datetime(y, m, d, h, mt):
-        today = datetime(y, m, d, h, mt) - datetime.now()
-        schedule_do = int(today.total_seconds())
-        time.sleep(schedule_do)
+
+# プロフィール設定
+
+
+def tweet_expired_reserve_deleter():
+    while True:
+        tweet_info = Tweet.query.order_by(Tweet.reserved.asc()).all()
+        time.sleep(1)
+        for items in tweet_info:
+            time.sleep(1)
+            if items.reserved < datetime.datetime.now() - datetime.timedelta(minutes=1):
+                db.session.delete(items)
+                db.session.commit()
+
+
+def tweet_reserve():
+    while True:
+        tweet_info = Tweet.query.order_by(Tweet.reserved.asc()).all()
+        time.sleep(1)
+        for items in tweet_info:
+            time.sleep(1)
+            if items.reserved.strftime('%Y%m%d%H%M') == datetime.datetime.now().strftime('%Y%m%d%H%M'):
+                post_tweet(api, items.contents)
+
+
+def profile_expired_reserve_deleter():
+    while True:
+        profile_info = Profile.query.order_by(Profile.reserved.asc()).all()
+        time.sleep(1)
+        for items in profile_info:
+            time.sleep(1)
+            if items.reserved < datetime.datetime.now():
+                db.session.delete(items)
+                db.session.commit()
+
+
+def profile_reserve():
+    while True:
+        profile_info = Profile.query.order_by(Profile.reserved.asc()).all()
+        time.sleep(1)
+        for items in profile_info:
+            time.sleep(1)
+            if items.reserved.strftime('%Y%m%d%H%M') == datetime.datetime.now().strftime('%Y%m%d%H%M'):
+                print("OKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKO")
+                print(items.name, items.location, items.description)
+                api.update_profile(name=items.name, location=items.location, description=items.description)
 
 
 @app.before_first_request
@@ -95,12 +129,16 @@ def account_store():
 
 @app.route("/account/delete", methods=["POST"])
 def account_delete():
+    id = request.form.get('id')
+    account_info = Accounts.query.get(id)
+    db.session.delete(account_info)
+    db.session.commit()
     return redirect("/account")
 
 
 @app.route("/tweet")
 def tweet():
-    tweet_info = Tweet.query.all()
+    tweet_info = Tweet.query.order_by(Tweet.reserved.asc()).all()
     return render_template("Tweet/index.html", data=tweet_info)
 
 
@@ -116,40 +154,57 @@ def tweet_store():
     contents = request.form["contents"]
     tweet_date = request.form["date"]
     tweet_time = request.form["time"]
-    datetime_obj = datetime.strptime(tweet_date + " " + tweet_time, '%Y-%m-%d %H:%M')
-    y = datetime_obj.year
-    m = datetime_obj.month
-    d = datetime_obj.day
-    h = datetime_obj.hour
-    mt = datetime_obj.minute
-    insert = Tweet(account_name=account_name, contents=contents, reserved=datetime_obj, y=y, m=m, d=d, h=h, mt=mt)
+    datetime_obj = datetime.datetime.strptime(tweet_date + " " + tweet_time, '%Y-%m-%d %H:%M')
+    insert = Tweet(account_name=account_name, contents=contents, reserved=datetime_obj)
     db.session.add(insert)
     db.session.commit()
     return redirect("/tweet")
 
 
-@app.route("/tweet/delete")
+@app.route("/tweet/delete", methods=["POST"])
 def tweet_delete():
-    return redirect("tweet")
+    id = request.form.get('id')
+    tweet_info = Tweet.query.get(id)
+    db.session.delete(tweet_info)
+    db.session.commit()
+    return redirect("/tweet")
 
 
 @app.route("/profile")
 def profile():
-    return render_template("Profile/index.html")
+    profile_info = Profile.query.order_by(Profile.reserved.asc()).all()
+    return render_template("Profile/index.html", data=profile_info)
 
 
 @app.route("/profile/create")
 def profile_create():
-    return render_template("Tweet/create.html")
+    account_name = Accounts.query.all()
+    return render_template("Profile/create.html", data=account_name)
 
 
-@app.route("/profile/store")
+@app.route("/profile/store", methods=["POST"])
 def profile_store():
+    account_name = request.form['account_name']
+    profile_name = request.form['name']
+    profile_detail = request.form["detail"]
+    profile_url = request.form["url"]
+    profile_location = request.form["location"]
+    tweet_date = request.form["date"]
+    tweet_time = request.form["time"]
+    datetime_obj = datetime.datetime.strptime(tweet_date + " " + tweet_time, '%Y-%m-%d %H:%M')
+    insert = Profile(account_name=account_name, name=profile_name, description=profile_detail, url=profile_url,
+                     location=profile_location, reserved=datetime_obj)
+    db.session.add(insert)
+    db.session.commit()
     return redirect("/profile")
 
 
-@app.route("/profile/delete")
+@app.route("/profile/delete", methods=["POST"])
 def profile_delete():
+    id = request.form.get('id')
+    profile_info = Profile.query.get(id)
+    db.session.delete(profile_info)
+    db.session.commit()
     return redirect("/profile")
 
 
@@ -158,10 +213,15 @@ def analytics():
     return render_template("Analytics/index.html")
 
 
-@app.route("/analytics/detail/<int:id>")
-def analytics_detail(id):
+@app.route("/analytics/detail/")
+def analytics_detail():
     return render_template("Analytics/index.html")
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+    executor.submit(tweet_expired_reserve_deleter)
+    executor.submit(tweet_reserve)
+    executor.submit(profile_expired_reserve_deleter)
+    executor.submit(profile_reserve)
+    app.run(debug=True, threaded=True)

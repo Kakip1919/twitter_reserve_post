@@ -118,6 +118,12 @@
                                 <td>{{ item.account_name }}</td>
                                 <td>{{ item.consumer_key }}</td>
                                 <td>**********************************</td>
+                                   <td>
+                                    <form action="/account/delete" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="id" value="{{ item.id }}">
+                                        <button type="submit" class="btn btn-danger">削除する</button>
+                                    </form>
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>
