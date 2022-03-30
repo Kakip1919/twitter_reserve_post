@@ -52,14 +52,13 @@ def post_tweet(self, contents):
 
 
 def tweet_expired_reserve_deleter():
-    while True:
-        tweet_info = Tweet.query.order_by(Tweet.reserved.asc()).all()
+    tweet_info = Tweet.query.order_by(Tweet.reserved.asc()).all()
+    time.sleep(1)
+    for items in tweet_info:
         time.sleep(1)
-        for items in tweet_info:
-            time.sleep(1)
-            if items.reserved < datetime.datetime.now() - datetime.timedelta(minutes=1):
-                db.session.delete(items)
-                db.session.commit()
+        if items.reserved < datetime.datetime.now() - datetime.timedelta(minutes=1):
+            db.session.delete(items)
+            db.session.commit()
 
 
 def tweet_reserve():
@@ -70,17 +69,18 @@ def tweet_reserve():
             time.sleep(1)
             if items.reserved.strftime('%Y%m%d%H%M') == datetime.datetime.now().strftime('%Y%m%d%H%M'):
                 post_tweet(api, items.contents)
+                db.session.delete(items)
+                db.session.commit()
 
 
 def profile_expired_reserve_deleter():
-    while True:
-        profile_info = Profile.query.order_by(Profile.reserved.asc()).all()
+    profile_info = Profile.query.order_by(Profile.reserved.asc()).all()
+    time.sleep(1)
+    for items in profile_info:
         time.sleep(1)
-        for items in profile_info:
-            time.sleep(1)
-            if items.reserved < datetime.datetime.now():
-                db.session.delete(items)
-                db.session.commit()
+        if items.reserved < datetime.datetime.now():
+            db.session.delete(items)
+            db.session.commit()
 
 
 def profile_reserve():
@@ -90,9 +90,9 @@ def profile_reserve():
         for items in profile_info:
             time.sleep(1)
             if items.reserved.strftime('%Y%m%d%H%M') == datetime.datetime.now().strftime('%Y%m%d%H%M'):
-                print("OKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKOKO")
-                print(items.name, items.location, items.description)
                 api.update_profile(name=items.name, location=items.location, description=items.description)
+                db.session.delete(items)
+                db.session.commit()
 
 
 @app.before_first_request
@@ -220,8 +220,8 @@ def analytics_detail():
 
 if __name__ == '__main__':
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-    executor.submit(tweet_expired_reserve_deleter)
+    tweet_expired_reserve_deleter()
+    profile_expired_reserve_deleter()
     executor.submit(tweet_reserve)
-    executor.submit(profile_expired_reserve_deleter)
     executor.submit(profile_reserve)
     app.run(debug=True, threaded=True)
